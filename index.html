@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ویزارد نصب اختصاصی EdgeTunnel</title>
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Vazirmatn, sans-serif; }
+        body { background-color: #f0f2f5; padding: 12px; margin: 0; direction: rtl; color: #1c1e21; }
+        .card { background: #ffffff; padding: 20px 16px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); max-width: 500px; margin: 0 auto; }
+        h2 { text-align: center; color: #f38020; margin: 0 0 8px 0; font-size: 22px; }
+        .subtitle { text-align: center; font-size: 13px; color: #606770; margin-bottom: 20px; }
+        .field { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #4b4f56; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccd0d5; border-radius: 10px; font-size: 14px; outline: none; background: #fafafa; }
+        input:focus, select:focus { border-color: #f38020; background: #fff; }
+        .hint { font-size: 11px; color: #8d949e; margin-top: 4px; }
+        button { background: #f38020; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 12px; box-shadow: 0 3px 8px rgba(243,128,32,0.3); }
+        button:active { background: #e06c12; }
+        .btn-gen { background: #42b72a; margin-top: 4px; padding: 8px; font-size: 12px; box-shadow: none; }
+        #status { margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 14px; display: none; line-height: 1.6; word-break: break-word; }
+        .success { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+        .error { background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
+        .info { background: #feefc3; color: #b06000; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>⚡ ویزارد نصب EdgeTunnel</h2>
+    <div class="subtitle">استقرار سریع EdgeTunnel روی Cloudflare Worker</div>
+    
+    <div class="field">
+        <label>Cloudflare Account ID:</label>
+        <input type="text" id="accountId" placeholder="مثال: 4a3b2c1d0e...">
+    </div>
+
+    <div class="field">
+        <label>Cloudflare API Token:</label>
+        <input type="password" id="apiToken" placeholder="توکن API با دسترسی Workers">
+    </div>
+
+    <div class="field">
+        <label>نام Worker جدید:</label>
+        <input type="text" id="workerName" value="edgetunnel-node">
+    </div>
+
+    <div class="field">
+        <label>شناسه UUID (کلید اتصال):</label>
+        <input type="text" id="uuid">
+        <button type="button" class="btn-gen" onclick="generateUUID()">🎲 ساخت UUID تصادفی</button>
+    </div>
+
+    <div class="field">
+        <label>آدرس IP یا دامنه تمیز (Clean IP/Domain):</label>
+        <input type="text" id="cleanIP" value="icook.hk">
+        <div class="hint">مثال: icook.hk یا IP تمیز اختصاصی خودتان</div>
+    </div>
+
+    <div class="field">
+        <label>پورت ProxyIP (اختیاری):</label>
+        <input type="text" id="proxyIP" placeholder="مثال: cdn.xn--b60aa.com:443">
+    </div>
+
+    <button onclick="deployEdgeTunnel()">🚀 نصب و استقرار EdgeTunnel</button>
+
+    <div id="status"></div>
+</div>
+
+<script>
+window.onload = function() {
+    if (localStorage.getItem('cf_account_id')) document.getElementById('accountId').value = localStorage.getItem('cf_account_id');
+    if (localStorage.getItem('cf_api_token')) document.getElementById('apiToken').value = localStorage.getItem('cf_api_token');
+    if (!document.getElementById('uuid').value) generateUUID();
+};
+
+function generateUUID() {
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+    document.getElementById('uuid').value = uuid;
+}
+
+async function deployEdgeTunnel() {
+    const accountId = document.getElementById('accountId').value.trim();
+    const apiToken = document.getElementById('apiToken').value.trim();
+    const workerName = document.getElementById('workerName').value.trim();
+    const uuid = document.getElementById('uuid').value.trim();
+    const cleanIP = document.getElementById('cleanIP').value.trim();
+    const proxyIP = document.getElementById('proxyIP').value.trim();
+
+    if (!accountId || !apiToken || !workerName || !uuid) {
+        showStatus('لطفاً اطلاعات ضروری را وارد کنید.', 'error');
+        return;
+    }
+
+    localStorage.setItem('cf_account_id', accountId);
+    localStorage.setItem('cf_api_token', apiToken);
+
+    showStatus('⏳ در حال دریافت اسکریپت EdgeTunnel...', 'info');
+
+    try {
+        const rawCodeResponse = await fetch('https://raw.githubusercontent.com/3kmfi6HP/EDtunnel/main/_worker.js');
+        if (!rawCodeResponse.ok) throw new Error('خطا در دریافت کد EdgeTunnel.');
+        
+        let scriptCode = await rawCodeResponse.text();
+
+        scriptCode = scriptCode.replace(/let userID = '.*?'/g, `let userID = '${uuid}'`);
+        if (proxyIP) {
+            scriptCode = scriptCode.replace(/let proxyIP = '.*?'/g, `let proxyIP = '${proxyIP}'`);
+        }
+        if (cleanIP) {
+            scriptCode = scriptCode.replace(/let proxyHosts = \[.*?\]/g, `let proxyHosts = ['${cleanIP}']`);
+        }
+
+        showStatus('⏳ در حال نصب روی کلودفلر...', 'info');
+
+        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${workerName}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${apiToken}`,
+                'Content-Type': 'application/javascript'
+            },
+            body: scriptCode
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showStatus(`✅ <b>EdgeTunnel با موفقیت نصب شد!</b><br><br>` +
+                       `📌 <b>پنل و لینک‌ها:</b><br>` +
+                       `<a href="https://${workerName}.workers.dev/sub/${uuid}" target="_blank">لینک اشتراک (Sub)</a><br>` +
+                       `<a href="https://${workerName}.workers.dev/${uuid}" target="_blank">ورود به پنل تنظیمات</a>`, 'success');
+        } else {
+            const errorMsg = result.errors.map(e => e.message).join('<br>');
+            showStatus(`❌ <b>خطا:</b><br>${errorMsg}`, 'error');
+        }
+
+    } catch (err) {
+        showStatus(`❌ <b>خطا:</b> ${err.message}`, 'error');
+    }
+}
+
+function showStatus(text, type) {
+    const statusDiv = document.getElementById('status');
+    statusDiv.style.display = 'block';
+    statusDiv.className = type;
+    statusDiv.innerHTML = text;
+}
+</script>
+
+</body>
+</html>
