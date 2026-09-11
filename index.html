@@ -3,58 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ویزارد نصب اختصاصی EdgeTunnel</title>
+    <title>BPB-Style Wizard for Edgetunnel</title>
     <style>
+        :root {
+            --primary: #f38020;
+            --primary-hover: #e06c12;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border: #334155;
+            --input-bg: #0f172a;
+        }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Vazirmatn, sans-serif; }
-        body { background-color: #f0f2f5; padding: 12px; margin: 0; direction: rtl; color: #1c1e21; }
-        .card { background: #ffffff; padding: 20px 16px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); max-width: 500px; margin: 0 auto; }
-        h2 { text-align: center; color: #f38020; margin: 0 0 8px 0; font-size: 22px; }
-        .subtitle { text-align: center; font-size: 13px; color: #606770; margin-bottom: 20px; }
-        .field { margin-bottom: 14px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #4b4f56; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccd0d5; border-radius: 10px; font-size: 14px; outline: none; background: #fafafa; }
-        input:focus, select:focus { border-color: #f38020; background: #fff; }
-        .hint { font-size: 11px; color: #8d949e; margin-top: 4px; }
-        button { background: #f38020; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 12px; box-shadow: 0 3px 8px rgba(243,128,32,0.3); }
-        button:active { background: #e06c12; }
-        .btn-gen { background: #42b72a; margin-top: 4px; padding: 8px; font-size: 12px; box-shadow: none; }
-        #status { margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 14px; display: none; line-height: 1.6; word-break: break-word; }
-        .success { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
-        .error { background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
-        .info { background: #feefc3; color: #b06000; }
+        body { background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px 12px; direction: rtl; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .wizard-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 520px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        .header { text-align: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+        .header h1 { margin: 0; font-size: 22px; color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .header p { margin: 6px 0 0; font-size: 13px; color: var(--text-sub); }
+        .section-title { font-size: 14px; color: var(--primary); font-weight: bold; margin: 18px 0 10px; display: flex; align-items: center; gap: 6px; }
+        .field { margin-bottom: 16px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; }
+        input, select { width: 100%; padding: 12px 14px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text-main); font-size: 14px; outline: none; transition: border-color 0.2s; }
+        input:focus, select:focus { border-color: var(--primary); }
+        .input-group { display: flex; gap: 8px; }
+        .btn-action { background: #3b82f6; color: white; border: none; padding: 0 16px; border-radius: 10px; font-size: 13px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+        .btn-action:hover { background: #2563eb; }
+        .btn-deploy { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 12px rgba(243,128,32,0.3); transition: all 0.2s; }
+        .btn-deploy:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-deploy:disabled { opacity: 0.6; cursor: not-allowed; }
+        #status { margin-top: 20px; padding: 14px; border-radius: 12px; font-size: 13px; display: none; line-height: 1.7; word-break: break-word; }
+        .status-info { background: #1e3a5f; color: #93c5fd; border: 1px solid #2563eb; }
+        .status-success { background: #14532d; color: #86efac; border: 1px solid #16a34a; }
+        .status-error { background: #450a0a; color: #fca5a5; border: 1px solid #dc2626; }
+        .badge { background: #334155; color: #f8fafc; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: normal; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>⚡ ویزارد نصب EdgeTunnel</h2>
-    <div class="subtitle">استقرار سریع EdgeTunnel روی Cloudflare Worker</div>
-    
+<div class="wizard-card">
+    <div class="header">
+        <h1>⚡ BPB-Style Edgetunnel Wizard</h1>
+        <p>ویزارد استقرار هوشمند سورس cmliu/edgetunnel روی Cloudflare Workers</p>
+    </div>
+
+    <div class="section-title">🔑 ۱. احراز هویت کلودفلر</div>
     <div class="field">
         <label>Cloudflare Account ID:</label>
-        <input type="text" id="accountId" placeholder="مثال: 4a3b2c1d0e...">
+        <input type="text" id="accountId" placeholder="مثال: 4a3b2c1d0e8f...">
     </div>
 
     <div class="field">
         <label>Cloudflare API Token:</label>
-        <input type="password" id="apiToken" placeholder="توکن API با دسترسی Workers">
+        <input type="password" id="apiToken" placeholder="توکن API با دسترسی Edit Workers">
     </div>
 
+    <div class="section-title">⚙️ ۲. تنظیمات Worker و پروتکل</div>
     <div class="field">
-        <label>نام Worker جدید:</label>
-        <input type="text" id="workerName" value="edgetunnel-node">
+        <label>نام Worker:</label>
+        <input type="text" id="workerName" value="bpb-edgetunnel">
     </div>
 
     <div class="field">
         <label>شناسه UUID (کلید اتصال):</label>
-        <input type="text" id="uuid">
-        <button type="button" class="btn-gen" onclick="generateUUID()">🎲 ساخت UUID تصادفی</button>
+        <div class="input-group">
+            <input type="text" id="uuid" placeholder="شناسه UUID اختصاصی">
+            <button type="button" class="btn-action" onclick="generateUUID()">🎲 تصادفی</button>
+        </div>
     </div>
 
     <div class="field">
-        <label>آدرس IP یا دامنه تمیز (Clean IP/Domain):</label>
-        <input type="text" id="cleanIP" value="icook.hk">
-        <div class="hint">مثال: icook.hk یا IP تمیز اختصاصی خودتان</div>
+        <label>آدرس IP یا دامنه تمیز (Clean IP):</label>
+        <input type="text" id="cleanIP" value="icook.hk" placeholder="مثال: icook.hk">
     </div>
 
     <div class="field">
@@ -62,15 +82,15 @@
         <input type="text" id="proxyIP" placeholder="مثال: cdn.xn--b60aa.com:443">
     </div>
 
-    <button onclick="deployEdgeTunnel()">🚀 نصب و استقرار EdgeTunnel</button>
+    <button id="deployBtn" class="btn-deploy" onclick="startDeployment()">🚀 شروع استقرار (Deploy)</button>
 
     <div id="status"></div>
 </div>
 
 <script>
 window.onload = function() {
-    if (localStorage.getItem('cf_account_id')) document.getElementById('accountId').value = localStorage.getItem('cf_account_id');
-    if (localStorage.getItem('cf_api_token')) document.getElementById('apiToken').value = localStorage.getItem('cf_api_token');
+    if (localStorage.getItem('bpb_cf_acc')) document.getElementById('accountId').value = localStorage.getItem('bpb_cf_acc');
+    if (localStorage.getItem('bpb_cf_token')) document.getElementById('apiToken').value = localStorage.getItem('bpb_cf_token');
     if (!document.getElementById('uuid').value) generateUUID();
 };
 
@@ -82,30 +102,34 @@ function generateUUID() {
     document.getElementById('uuid').value = uuid;
 }
 
-async function deployEdgeTunnel() {
+async function startDeployment() {
     const accountId = document.getElementById('accountId').value.trim();
     const apiToken = document.getElementById('apiToken').value.trim();
     const workerName = document.getElementById('workerName').value.trim();
     const uuid = document.getElementById('uuid').value.trim();
     const cleanIP = document.getElementById('cleanIP').value.trim();
     const proxyIP = document.getElementById('proxyIP').value.trim();
+    const btn = document.getElementById('deployBtn');
 
     if (!accountId || !apiToken || !workerName || !uuid) {
-        showStatus('لطفاً اطلاعات ضروری را وارد کنید.', 'error');
+        showStatus('❌ لطفاً تمامی مقادیر ضروری را تکمیل کنید.', 'status-error');
         return;
     }
 
-    localStorage.setItem('cf_account_id', accountId);
-    localStorage.setItem('cf_api_token', apiToken);
+    localStorage.setItem('bpb_cf_acc', accountId);
+    localStorage.setItem('bpb_cf_token', apiToken);
 
-    showStatus('⏳ در حال دریافت اسکریپت EdgeTunnel...', 'info');
+    btn.disabled = true;
+    showStatus('⏳ در حال دریافت سورس اصلی cmliu/edgetunnel از گیت‌هاب...', 'status-info');
 
     try {
-        const rawCodeResponse = await fetch('https://raw.githubusercontent.com/3kmfi6HP/EDtunnel/main/_worker.js');
-        if (!rawCodeResponse.ok) throw new Error('خطا در دریافت کد EdgeTunnel.');
+        // دریافت مستقیم سورس کد اصلی از cmliu/edgetunnel
+        const rawCodeResponse = await fetch('https://raw.githubusercontent.com/cmliu/edgetunnel/main/_worker.js');
+        if (!rawCodeResponse.ok) throw new Error('خطا در دریافت کد از مخزن cmliu.');
         
         let scriptCode = await rawCodeResponse.text();
 
+        // اعمال کانفیگ‌ها در سورس کد
         scriptCode = scriptCode.replace(/let userID = '.*?'/g, `let userID = '${uuid}'`);
         if (proxyIP) {
             scriptCode = scriptCode.replace(/let proxyIP = '.*?'/g, `let proxyIP = '${proxyIP}'`);
@@ -114,7 +138,7 @@ async function deployEdgeTunnel() {
             scriptCode = scriptCode.replace(/let proxyHosts = \[.*?\]/g, `let proxyHosts = ['${cleanIP}']`);
         }
 
-        showStatus('⏳ در حال نصب روی کلودفلر...', 'info');
+        showStatus('⚡ در حال اتصال به API کلودفلر و استقرار Worker...', 'status-info');
 
         const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${workerName}`;
         const response = await fetch(url, {
@@ -129,24 +153,29 @@ async function deployEdgeTunnel() {
         const result = await response.json();
 
         if (result.success) {
-            showStatus(`✅ <b>EdgeTunnel با موفقیت نصب شد!</b><br><br>` +
-                       `📌 <b>پنل و لینک‌ها:</b><br>` +
-                       `<a href="https://${workerName}.workers.dev/sub/${uuid}" target="_blank">لینک اشتراک (Sub)</a><br>` +
-                       `<a href="https://${workerName}.workers.dev/${uuid}" target="_blank">ورود به پنل تنظیمات</a>`, 'success');
+            showStatus(
+                `🎉 <b>استقرار با موفقیت انجام شد!</b><br><br>` +
+                `🌐 <b>آدرس Worker:</b><br><code>https://${workerName}.workers.dev</code><br><br>` +
+                `🔗 <b>لینک اشتراک (Sub):</b><br><a href="https://${workerName}.workers.dev/sub/${uuid}" target="_blank" style="color:#86efac">کلیک برای دریافت ساب</a><br><br>` +
+                `⚙️ <b>صفحه پنل:</b><br><a href="https://${workerName}.workers.dev/${uuid}" target="_blank" style="color:#86efac">ورود به پنل مدیریت</a>`,
+                'status-success'
+            );
         } else {
             const errorMsg = result.errors.map(e => e.message).join('<br>');
-            showStatus(`❌ <b>خطا:</b><br>${errorMsg}`, 'error');
+            showStatus(`❌ <b>خطا از سمت کلودفلر:</b><br>${errorMsg}`, 'status-error');
         }
 
     } catch (err) {
-        showStatus(`❌ <b>خطا:</b> ${err.message}`, 'error');
+        showStatus(`❌ <b>خطا در فرایند:</b> ${err.message}`, 'status-error');
+    } finally {
+        btn.disabled = false;
     }
 }
 
-function showStatus(text, type) {
+function showStatus(text, className) {
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
-    statusDiv.className = type;
+    statusDiv.className = className;
     statusDiv.innerHTML = text;
 }
 </script>
